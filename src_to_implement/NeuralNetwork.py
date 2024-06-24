@@ -11,6 +11,7 @@ class NeuralNetwork:
         self.label_tensor = None
         self.weights_initializer = weights_initializer
         self.bias_initializer = bias_initializer
+        self.phase = "train"
         
     @property
     def phase(self):
