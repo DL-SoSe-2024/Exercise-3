@@ -1,5 +1,6 @@
 import numpy as np
 from Layers import Base
+from Layers import Helpers
 
 class BatchNormalization(Base.BaseLayer):
     def __init__(self, channels):
@@ -30,7 +31,15 @@ class BatchNormalization(Base.BaseLayer):
             
     
     def backward(self, error_tensor):
-        pass
+        grad_bias = np.sum(error_tensor, axis=0)
+        gradient_weights = np.sum(error_tensor * self.weights, axis=0)
+
+        grad_input = Helpers.compute_bn_gradients(error_tensor, self.input_tensor,
+                    self.weights, self.mean, self.var)
+        
+        if self.optimizer:
+            self.weights = self.optimizer.calculate_update(self.weights, gradient_weights)
+            self.bias = self.optimizer.calculate_update(self.bias, grad_bias)
     
     def initialize(self, **args):
         self.weights = np.ones(self.channels)
