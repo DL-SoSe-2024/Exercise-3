@@ -1,6 +1,5 @@
 import numpy as np
-from Layers import Base
-from Layers import Helpers
+from Layers import Base, Helpers
 
 class BatchNormalization(Base.BaseLayer):
     def __init__(self, channels):
