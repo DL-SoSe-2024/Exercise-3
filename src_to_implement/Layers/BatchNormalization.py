@@ -17,17 +17,21 @@ class BatchNormalization(Base.BaseLayer):
         self._optimizer = None
         self.gradient_bias = None
         self.gradient_weights = None
+        self.original_input_shape = None
     
     def forward(self, input_tensor):
         output_tensor = None
         reformatted = False
-        self.input_tensor = input_tensor
+        # for reformating later
+        self.original_input_shape = input_tensor.shape
+        
 
         if input_tensor.ndim == 4:
             input_tensor = self.reformat(input_tensor)
             reformatted = True
 
         if input_tensor.ndim == 2:
+            self.input_tensor = input_tensor
             self.mean = np.mean(input_tensor, axis = 0, dtype=float, keepdims=True)
             self.var = np.var(input_tensor, axis = 0, dtype=float, keepdims=True)
 
@@ -66,7 +70,7 @@ class BatchNormalization(Base.BaseLayer):
 
         self.gradient_bias = np.sum(error_tensor, axis=0)
         self.gradient_weights = np.sum(error_tensor * self.weights, axis=0)
-
+        
         # to match the batch size (error_tensor.shape[0])
         mean_broadcasted = np.repeat(self.mean, error_tensor.shape[0], axis=0)
         var_broadcasted = np.repeat(self.var, error_tensor.shape[0], axis=0)
@@ -89,8 +93,8 @@ class BatchNormalization(Base.BaseLayer):
             b, h, m, n = tensor.shape
             return tensor.transpose(0, 2, 3, 1).reshape(b * m * n, h)
         
-        if tensor.ndim == 2 and self.input_tensor.ndim == 4:
-            b, h, m, n = self.input_tensor.shape
+        if tensor.ndim == 2 and len(self.original_input_shape) == 4:
+            b, h, m, n = self.original_input_shape
             return tensor.reshape(b, m, n, h).transpose(0, 3, 1, 2)
         
         return tensor
