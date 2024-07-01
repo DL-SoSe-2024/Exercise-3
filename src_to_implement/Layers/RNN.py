@@ -43,10 +43,8 @@ class RNN(Base.BaseLayer):
         self.gradient_weights = np.zeros_like(self.input_gate_layer.weights)
         for t in reversed(range(error_tensor.shape[0])):
             error_vector = error_tensor[t,...]
-            x = self.output_gate_activation.backward(error_vector)
-            y = self.output_gate_layer.backward(x)
-            intermediate_error_vector = y + hidden_error_vector
-            output_gate_update += self.output_gate_layer.gradient_weights
+            intermediate_error_vector = self.output_gate_layer.backward(self.output_gate_activation.backward(error_vector)) + hidden_error_vector
+            output_gate_update += intermediate_error_vector
             input_error_vector_tilda = self.input_gate_layer.backward(self.input_gate_activation.backward(intermediate_error_vector))
             self.gradient_weights += self.input_gate_layer.gradient_weights
             hidden_error_vector = input_error_vector_tilda[-self.hidden_size:]
@@ -91,17 +89,3 @@ class RNN(Base.BaseLayer):
             return self.optimizer.regularizer.norm(layer.weights)
         else:
             return 0
-
-
-
-
-'''      
-input_gate_layer = FullyConnected.FullyConnected(self.input_size + self.hidden_size, self.hidden_size)
-input_gate_activation = TanH.TanH()
-self.input_gate_layer.initialize(self.weights_intializer, self.bias_initializer)
-self.hidden_state = self.input_gate_activation.forward(self.input_gate_layer.forward(np.concatenate(input_vector, self.hidden_state)))
-output_gate_layer = FullyConnected.FullyConnected(self.hidden_size, self.output_size)
-output_gate_activation = Sigmoid.Sigmoid()
-output_gate_layer.initialize(self.weights_intializer, self.bias_initializer)
-output_vector = output_gate_activation.forward(output_gate_layer.forward(self.hidden_state))
-'''
