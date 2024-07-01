@@ -13,6 +13,7 @@ class BatchNormalization(Base.BaseLayer):
         self.var = None
         self.moving_var = None
         self.alpha = 0.8
+        self.input_tensor_normalized = None
         self.input_tensor = None
         self._optimizer = None
         self.gradient_bias = None
@@ -45,12 +46,12 @@ class BatchNormalization(Base.BaseLayer):
                 else:
                     self.moving_mean = self.alpha * self.moving_mean + (1-self.alpha) * self.mean
                     self.moving_var = self.alpha * self.moving_var + (1-self.alpha) * self.var
-                input_tensor_normalized = np.divide((input_tensor - self.mean), np.sqrt(self.var + np.finfo(float).eps)) 
-                output_tensor = np.multiply(self.weights, input_tensor_normalized) + self.bias  
+                self.input_tensor_normalized = np.divide((input_tensor - self.mean), np.sqrt(self.var + np.finfo(float).eps)) 
+                output_tensor = np.multiply(self.weights, self.input_tensor_normalized) + self.bias  
             else:
-                input_tensor_normalized = np.divide((input_tensor - self.moving_mean), 
+                self.input_tensor_normalized = np.divide((input_tensor - self.moving_mean), 
                 np.sqrt(self.moving_var + np.finfo(float).eps))
-                output_tensor = np.multiply(self.weights, input_tensor_normalized) + self.bias
+                output_tensor = np.multiply(self.weights, self.input_tensor_normalized) + self.bias
         
         if reformatted:
             # from 2d back to original 4d
@@ -67,7 +68,7 @@ class BatchNormalization(Base.BaseLayer):
             reformatted = True
 
         self.gradient_bias = np.sum(error_tensor, axis=0)
-        self.gradient_weights = np.sum(error_tensor * self.weights, axis=0)
+        self.gradient_weights = np.sum(error_tensor * self.input_tensor_normalized, axis=0)
         
         # to match the batch size (error_tensor.shape[0])
         mean_broadcasted = np.repeat(self.mean, error_tensor.shape[0], axis=0)
