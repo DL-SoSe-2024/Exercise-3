@@ -1,12 +1,16 @@
+from Layers import Base
 import numpy as np
 
-class Sigmoid:
+class Sigmoid(Base.BaseLayer):
     def __init__(self):
-        self.activations = None
+        super().__init__()
+        self.activations = []
 
     def forward(self, input_tensor):
-        self.activations = 1 / (1 + np.exp(-input_tensor))
-        return self.activations
+        activation = 1 / (1 + np.exp(-input_tensor))
+        self.activations.append(activation)
+        return activation
 
     def backward(self, error_tensor):
-        return error_tensor * self.activations * (1 - self.activations)
+        activation = self.activations.pop()
+        return error_tensor * activation * (1 - activation)
