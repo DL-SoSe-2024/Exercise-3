@@ -39,10 +39,9 @@ class BatchNormalization(Base.BaseLayer):
                 self.initialize()
 
             if not self.testing_phase:
-                
                 if self.moving_mean is None:
-                    self.moving_mean = (1-self.alpha) * self.mean
-                    self.moving_var = (1-self.alpha) * self.var
+                    self.moving_mean = self.mean
+                    self.moving_var = self.var
                 else:
                     self.moving_mean = self.alpha * self.moving_mean + (1-self.alpha) * self.mean
                     self.moving_var = self.alpha * self.moving_var + (1-self.alpha) * self.var
@@ -56,7 +55,6 @@ class BatchNormalization(Base.BaseLayer):
         if reformatted:
             # from 2d back to original 4d
             output_tensor = self.reformat(output_tensor)
-        
         return output_tensor
         
             
