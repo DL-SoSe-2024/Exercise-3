@@ -27,7 +27,6 @@ class NeuralNetwork:
             for layer in self.layers:
                 layer.testing_phase = False
         
-    
     def append_layer(self, layer):
         if layer.trainable:
             layer.optimizer = copy.deepcopy(self.optimizer)
