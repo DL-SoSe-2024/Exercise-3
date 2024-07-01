@@ -29,10 +29,8 @@ class RNN(Base.BaseLayer):
             self.hidden_state = np.zeros(self.hidden_size)
         for t in range(input_tensor.shape[0]):
             input_vector = input_tensor[t,...]
-            #print(input_vector.shape, self.hidden_state.shape)
             x_tilda = np.concatenate([input_vector, self.hidden_state])
-            x = self.input_gate_layer.forward(x_tilda)
-            self.hidden_state = self.input_gate_activation.forward(x + self.calculate_regularization_loss(self.input_gate_layer))
+            self.hidden_state = self.input_gate_activation.forward(self.input_gate_layer.forward(x_tilda) + self.calculate_regularization_loss(self.input_gate_layer))
             output_tensor[t,...] = self.output_gate_activation.forward(self.output_gate_layer.forward(self.hidden_state) + self.calculate_regularization_loss(self.output_gate_layer))
         return output_tensor
     
@@ -44,7 +42,7 @@ class RNN(Base.BaseLayer):
         for t in reversed(range(error_tensor.shape[0])):
             error_vector = error_tensor[t,...]
             intermediate_error_vector = self.output_gate_layer.backward(self.output_gate_activation.backward(error_vector)) + hidden_error_vector
-            output_gate_update += intermediate_error_vector
+            output_gate_update += self.output_gate_layer.gradient_weights
             input_error_vector_tilda = self.input_gate_layer.backward(self.input_gate_activation.backward(intermediate_error_vector))
             self.gradient_weights += self.input_gate_layer.gradient_weights
             hidden_error_vector = input_error_vector_tilda[-self.hidden_size:]
@@ -78,11 +76,11 @@ class RNN(Base.BaseLayer):
         
     @property
     def gradient_weights(self):
-        return self.input_gate_layer.gradient_weights
+        return self._gradient_weights
     
     @gradient_weights.setter
     def gradient_weights(self, gradient_weights):
-        self.input_gate_layer.gradient_weights = gradient_weights
+        self._gradient_weights = gradient_weights
     
     def calculate_regularization_loss(self, layer):
         if hasattr(self, "optimizer") and self.optimizer.regularizer is not None:
