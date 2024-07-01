@@ -98,7 +98,7 @@ class BatchNormalization(Base.BaseLayer):
         
         return tensor
     
-    def initialize(self, **args):
+    def initialize(self, weights_initializer = None, bias_initializer = None):
         self.weights = np.ones(self.channels)
         self.bias = np.zeros(self.channels)
         
