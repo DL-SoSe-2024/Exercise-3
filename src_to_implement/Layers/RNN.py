@@ -30,8 +30,8 @@ class RNN(Base.BaseLayer):
         for t in range(input_tensor.shape[0]):
             input_vector = input_tensor[t,...]
             x_tilda = np.concatenate([input_vector, self.hidden_state])
-            self.hidden_state = self.input_gate_activation.forward(self.input_gate_layer.forward(x_tilda) + self.calculate_regularization_loss(self.input_gate_layer))
-            output_tensor[t,...] = self.output_gate_activation.forward(self.output_gate_layer.forward(self.hidden_state) + self.calculate_regularization_loss(self.output_gate_layer))
+            self.hidden_state = self.input_gate_activation.forward(self.input_gate_layer.forward(x_tilda))
+            output_tensor[t,...] = self.output_gate_activation.forward(self.output_gate_layer.forward(self.hidden_state))
         return output_tensor
     
     def backward(self, error_tensor):
