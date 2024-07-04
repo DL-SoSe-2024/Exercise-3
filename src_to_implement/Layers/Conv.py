@@ -17,19 +17,17 @@ class Conv(Base.BaseLayer):
     def forward(self, input_tensor):
         self.input_tensor = input_tensor
         output = []
-        for i in range(input_tensor.shape[0]):
-            batch = input_tensor[i,...]
-            batch_output = []
-            for k in range(self.num_kernels):
-                kernel = self.weights[k,...]
-                padding = ((0,0),) + tuple((int(np.ceil((kernel.shape[i]-1)/2)), int(np.floor((kernel.shape[i]-1)/2))) for i in range(1, len(kernel.shape)))
-                padded_array = np.pad(batch, padding)
-                output_layer = scipy.signal.correlate(padded_array, kernel, mode='valid', method='auto') + self.bias[k]
-                out_shape = (output_layer.shape[0],) + tuple((1 + (batch.shape[i]+ int(np.ceil((kernel.shape[i]-1)/2)) + int(np.floor((kernel.shape[i]-1)/2)) - kernel.shape[i])//self.stride_shape[i-1] for i in range(1, len(output_layer.shape))))
-                out_strides = (output_layer.strides[0],) + tuple((output_layer.strides[i] * self.stride_shape[i-1] for i in range(1, len(output_layer.shape))))
-                batch_output.append(np.expand_dims(np.lib.stride_tricks.as_strided(output_layer, shape=out_shape, strides=out_strides), axis=0))
-            output.append(np.hstack(tuple(batch_output)))
-        return np.vstack(tuple(output))
+        for k in range(self.num_kernels):
+            kernel = self.weights[k,...]
+            expanded_kernel = np.expand_dims(kernel, axis=0)
+            padding = ((0,0),(0,0),) + tuple((int(np.ceil((kernel.shape[i]-1)/2)), int(np.floor((kernel.shape[i]-1)/2))) for i in range(1, len(kernel.shape)))
+            padded_array = np.pad(input_tensor, padding)
+            output_layer = scipy.signal.correlate(padded_array, expanded_kernel, mode='valid', method='auto') + self.bias[k]
+            out_shape = (output_layer.shape[0], output_layer.shape[1]) + tuple((1 + (input_tensor.shape[i]+ int(np.ceil((expanded_kernel.shape[i]-1)/2)) + int(np.floor((expanded_kernel.shape[i]-1)/2)) - expanded_kernel.shape[i])//self.stride_shape[i-2] for i in range(2, len(output_layer.shape))))
+            out_strides = (output_layer.strides[0], output_layer.strides[1]) + tuple((output_layer.strides[i] * self.stride_shape[i-2] for i in range(2, len(output_layer.shape))))
+            output.append(np.lib.stride_tricks.as_strided(output_layer, shape=out_shape, strides=out_strides))
+        output = np.concatenate(output, axis=1)
+        return output
     
     @property
     def optimizer(self):
